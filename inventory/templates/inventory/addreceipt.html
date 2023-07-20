@@ -1,0 +1,40 @@
+{% extends 'inventory/base.html' %}
+
+{% block content %}
+{% if receipt.number == "null" %}
+	<h2 style="padding-bottom:10px">Add New Receipt</h2>
+	<form method="POST" action="#" autocomplete="on">
+		{% csrf_token %}
+		<div class="row" style="padding-bottom:10px">
+			<div class="col">
+				<input type="radio", name="type", value="supplierInvoice" checked> Supplier Invoice
+			</div>
+			<div class="col">
+				<input type="radio", name="type", value="transferSlip"> Transfer Slip
+			</div>
+			<div class="col">
+				<input type="radio", name="type", value="salesInvoice"> Sales Invoice
+			</div>
+		</div>
+		<p><input type="text", name="number", placeholder="Receipt Number"></p>
+		<p><input type="text", name="store", placeholder="From Which Store/Supplier?"></p>
+		<p><input type="date", name="date", placeholder="Date"></p>
+		{% for item in receipt.item_set.all %}
+			<p>
+				<label>{{item.brand}} {{item.model}} {{item.specs}}:</label>
+				<input type="number", name="{{item.id}}Qty", placeholder="Quantity", autocomplete="off">
+			</p>
+		{% endfor %}
+		<p><button type="submit", name="newReceipt", value="newReceipt">Add Receipt</button></p>
+	</form>
+{% else %}
+	<h2 style="padding-bottom:10px">Receipt #{{receipt.number}}</h2>
+	<p><label>Date: {{receipt.date}}</label></p>
+	<p><label>Type: {{receipt.type}}</label></p>
+	<p><label>Store From: {{receipt.store}}</label></p>
+	<p><label>ITEMS</label></p>
+	{% for item, quantity in zipped_list %}
+		<li><label>{{item}} : {{quantity}}</label></li>
+	{% endfor %}
+{% endif %}
+{% endblock %}

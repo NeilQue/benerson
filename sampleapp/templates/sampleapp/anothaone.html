@@ -1,0 +1,14 @@
+{% extends 'sampleapp/base.html' %}
+
+{% block content %}
+	<h1>{{id}}</h1>
+
+	<ul>
+	{% for item in <QuerySet [1,2,3]> %}
+		{% if item >2 %}
+		<li>{{item}}</li>
+		{% endif %}
+	{% endfor %}
+	</ul>
+	
+{% endblock %}

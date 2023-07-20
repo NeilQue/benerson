@@ -1,0 +1,17 @@
+{% extends 'inventory/base.html' %}
+
+{% block content %}
+<h2 style="padding-bottom:10px">Add New Item</h2>
+<form method="POST" action="/additem/" autocomplete="on">
+	{% csrf_token %}
+	<p><input type="text", name="type", placeholder="Laptop/Desktop Set/PC Part" autofocus></p>
+	<p><input type="text", name="model", placeholder="Model"></p>
+	<p><input type="text", name="brand", placeholder="Brand"></p>
+	<p><input type="text", name="description", placeholder="Description"></p>
+	<p><input type="text", name="costPrice", placeholder="Cost"></p>
+	<p><input type="text", name="srp", placeholder="SRP"></p>
+	<p><input type="number", name="bQty", placeholder="Benerson Quantity", autocomplete="off"></p>
+	<p><input type="number", name="qQty", placeholder="Qlinx Quantity", autocomplete="off"></p>
+	<p><button type="submit", name="newItem", value="newItem">Add Item</button></p>
+</form>
+{% endblock %}
