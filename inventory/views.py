@@ -42,6 +42,7 @@ def home(response):
             for word in search:
                 results = results.filter(
                     Q(brand__contains=word) |
+                    Q(type__contains=word) |
                     Q(model__contains=word) |
                     Q(specs__contains=word)
                 )
