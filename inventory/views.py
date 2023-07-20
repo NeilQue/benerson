@@ -9,7 +9,7 @@ from django.db.models import Q
 # get total number of laptops
 
 def home(response):
-    all_items = Item.objects.all()
+    all_items = Item.objects.order_by('brand', 'model')
     
     if response.method == "POST":
         if response.POST.get("makeTransaction"):
@@ -74,7 +74,7 @@ def addItem(response):
     
 #logs
 def searchReceipt(response):
-    all_receipts = Receipt.objects.all()
+    all_receipts = Receipt.objects.order_by('date').reverse()
     
     if response.method == "POST":
         if response.POST.get("search_receipt"):
