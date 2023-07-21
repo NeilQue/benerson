@@ -2,14 +2,22 @@ from django.shortcuts import render
 from .models import Receipt, Item
 from django.http import HttpResponseRedirect
 from django.db.models import Q
+from django.db.models.functions import Lower
 
 ## SUGGESTIONS ##
-# add sort button (alphabetically)
-# add filter button (by item type)
 # get total number of laptops
 
 def home(response):
-    all_items = Item.objects.order_by('brand', 'model')
+    all_items = Item.objects.order_by(Lower('brand'), Lower('model'))
+    context = {}
+
+    laptops = all_items.filter(type__iexact="laptop")
+    total_laptops = 0
+
+    for item in laptops:
+        total_laptops += item.benerson_qty + item.qlinx_qty
+
+    context["total_laptops"] = total_laptops
     
     if response.method == "POST":
         if response.POST.get("makeTransaction"):
@@ -46,10 +54,14 @@ def home(response):
                     Q(model__contains=word) |
                     Q(specs__contains=word)
                 )
+
+            context["item_set"] = results
                 
-            return render(response, 'inventory/home.html', {"item_set": results})
+            return render(response, 'inventory/home.html', context)
                     
-    return render(response, 'inventory/home.html', {"item_set": all_items})
+    context["item_set"] = all_items
+
+    return render(response, 'inventory/home.html', context)
     
 def addItem(response):
     if response.method == "POST":
