@@ -64,8 +64,7 @@ def home(response):
     context["item_set"] = all_items
 
     return render(response, 'inventory/home.html', context)
-
-@login_required    
+   
 def addItem(response):
     if response.method == "POST":
         if response.POST.get("newItem"):
@@ -88,7 +87,6 @@ def addItem(response):
     return render(response, 'inventory/additem.html', {})
     
 #logs
-@login_required
 def searchReceipt(response):
     all_receipts = Receipt.objects.order_by('date').reverse()
     
@@ -103,7 +101,6 @@ def searchReceipt(response):
     return render(response, 'inventory/searchreceipt.html', {"receipt_set": all_receipts})
     
 #page after make transaction
-@login_required
 def addReceipt(response, id):
     current_receipt = Receipt.objects.get(id=id)    
     
@@ -163,8 +160,7 @@ def addReceipt(response, id):
             
     return render(response, 'inventory/addreceipt.html', {"receipt":current_receipt, "zipped_list":zipped_list})
    
-#edit item   
-@login_required
+#edit item
 def showItem(response, id):
     current_item = Item.objects.get(id=id)
     
