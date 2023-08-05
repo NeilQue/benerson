@@ -165,7 +165,11 @@ def showReceipt(response, id):
                             item.qlinx_qty = item.qlinx_qty + item_quantity
                             
                 item.save()
-            except:
+            except ObjectDoesNotExist:
+                #TODO
+                return HttpResponseRedirect('/additem', )
+                
+            except MultipleObjectsReturned:
                 pass
         
         elif response.POST.get("save"):
@@ -196,4 +200,5 @@ def showReceipt(response, id):
             current_receipt.save()
     
     return render(response, 'inventory/editreceipt.html', 
-        {"zipped_list":zip(list(current_receipt.item_set.all()), current_receipt.quantities.split('.'))})
+        {"zipped_list": zip(list(current_receipt.item_set.all()), current_receipt.quantities.split('.')),
+        "item_set": Item.objects.all()})
