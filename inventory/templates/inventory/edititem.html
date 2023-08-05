@@ -4,14 +4,14 @@
 <h2 style="padding-bottom:10px">Edit Item</h2>
 <form method="POST" action="#" autocomplete="on">
 	{% csrf_token %}
-	<p><input type="text", name="type", value="{{item.type}}" autofocus></p>
-	<p><input type="text", name="model", value="{{item.model}}"></p>
-	<p><input type="text", name="brand", value="{{item.brand}}"></p>
-	<p><input type="text", name="description", value="{{item.specs}}"></p>
-	<p><input type="text", name="costPrice", value="{{item.costPrice}}"></p>
-	<p><input type="text", name="srp", value="{{item.srp}}"></p>
-	<p><input type="number", name="bQty", value="{{item.benerson_qty}}", autocomplete="off"></p>
-	<p><input type="number", name="qQty", value="{{item.qlinx_qty}}", autocomplete="off"></p>
+	<p>Type: <input type="text", name="type", value="{{item.type}}" autofocus></p>
+	<p>Brand: <input type="text", name="brand", value="{{item.brand}}"></p>
+	<p>Model: <input type="text", name="model", value="{{item.model}}"></p>
+	<p>Specs: <input type="text", name="description", value="{{item.specs}}"></p>
+	<p>Cost: <input type="text", name="costPrice", value="{{item.costPrice}}"></p>
+	<p>SRP: <input type="text", name="srp", value="{{item.srp}}"></p>
+	<p>Benerson Quantity: <input type="number", name="bQty", value="{{item.benerson_qty}}", autocomplete="off"></p>
+	<p>Qlinx Quantity: <input type="number", name="qQty", value="{{item.qlinx_qty}}", autocomplete="off"></p>
 	<p><button type="submit", name="editItem", value="editItem">Edit Item</button></p>
 </form>
 {% endblock %}

@@ -5,8 +5,8 @@
 <form method="POST" action="/additem/" autocomplete="on">
 	{% csrf_token %}
 	<p><input type="text", name="type", placeholder="Laptop/Desktop Set/PC Part" autofocus></p>
+	<p><input type="text", name="brand", placeholder="Brand"></p>	
 	<p><input type="text", name="model", placeholder="Model"></p>
-	<p><input type="text", name="brand", placeholder="Brand"></p>
 	<p><input type="text", name="description", placeholder="Description"></p>
 	<p><input type="text", name="costPrice", placeholder="Cost"></p>
 	<p><input type="text", name="srp", placeholder="SRP"></p>
