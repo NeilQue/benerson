@@ -24,7 +24,7 @@
 			{% for receipt in receipt_set %}
 				<tr>
 					<td>{{receipt.type}}</td>
-					<td><a href="http://127.0.0.1:8000/r{{receipt.id}}">{{receipt.number}}</a></td>
+					<td><a href="/r{{receipt.id}}">{{receipt.number}}</a></td>
 					<td>{{receipt.date}}</td>
 					<td>{{receipt.store}}</td>
 				</tr>

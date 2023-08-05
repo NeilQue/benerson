@@ -1,0 +1,28 @@
+{% extends 'inventory/base.html' %}
+
+{% block content %}
+	<h2 style="padding-bottom:10px">Receipt #{{receipt.number}}</h2>
+	<p>Date: {{receipt.date}}</p>
+	<p>Type: {{receipt.type}}</p>
+	<p>Store From: {{receipt.store}}</p>
+	<form method="POST" action="#" autocomplete="on">
+		{% csrf_token %}
+		<p>ITEMS</p>
+		{% for item, quantity in zipped_list %}
+			<li>
+				{{item}} : <input type="number" name="{{item.id}}qty" placeholder="{{quantity}}" autocomplete="off">
+			</li>
+		{% endfor %}
+		<label for="newItem">Add Item To List:</label>
+		<input list="itemList" name="newItem" id="newItem" placeholder="Add Item">
+		<datalist id = "itemList">
+			{% for item in item_set %}
+			<option value="{{item}}">
+			{% endfor %}
+		</datalist>
+		<label>Quantity: </label>
+		<input type="number" name="quantity" placeholder="Quantity" autocomplete="off">
+		<p><button type="submit" name="addItem" value="addItem">Add Item</button></p>
+		<p><button type="submit" name="save" value="save">Save</button></p>
+	</form>
+{% endblock %}
