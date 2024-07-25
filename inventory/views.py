@@ -9,7 +9,6 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 ## SUGGESTIONS ##
 # add add receipt in sidenav to make it starting point
 
-@login_required
 def home(response):
     all_items = Item.objects.order_by(Lower('brand'), Lower('model'))
     context = {}
@@ -91,7 +90,8 @@ def searchReceipt(response):
             return render(response, 'inventory/searchreceipt.html', {"receipt_set": results})
     
     return render(response, 'inventory/searchreceipt.html', {"receipt_set": all_receipts})
-    
+
+@login_required    
 def addReceipt(response):
     if response.method == "POST":
         if response.POST.get("newReceipt"): 
