@@ -33,7 +33,7 @@ def home(response):
                 if response.POST.get("c" + str(item.id)) == "clicked":
                     item.delete()
                     
-            return HttpResponseRedirect("/")
+            return HttpResponseRedirect("/inventory")
                     
         elif response.POST.get("searchItem"):
             search = [word for word in response.POST.get("item_searched").split()]
