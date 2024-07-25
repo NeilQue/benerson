@@ -49,7 +49,7 @@ def home(response):
 
     return render(response, 'inventory/home.html', context)
    
-def addItem(response, action="/additem/"):
+def addItem(response, action="/additem/", brand_label="Brand", model_label="Model", description_label="Description"):
     if response.method == "POST":
         if response.POST.get("newItem"):
             new = Item(type="null", model="null", brand="null", specs="null", costPrice="null", srp="null", benerson_qty=0, qlinx_qty=0)
@@ -69,7 +69,8 @@ def addItem(response, action="/additem/"):
             
             # pop-up showing that item is saved
 
-    return render(response, 'inventory/additem.html', {"action": action})
+    return render(response, 'inventory/additem.html', {"action": action,
+                "brand_label":brand_label, "model_label":model_label, "description_label":description_label})
     
 #logs
 def searchReceipt(response):
@@ -143,7 +144,8 @@ def showReceipt(response, id):
                 receipt_item = ItemInReceipt(item=item, receipt=current_receipt, quantity=item_quantity, price=item_price)
                 receipt_item.save()
             except ObjectDoesNotExist:
-                return addItem(response, f"/r{current_receipt.id}/")
+                return addItem(response, f"/r{current_receipt.id}/",
+                                item_brand, item_model, item_specs)
 
         elif response.POST.get("save"):
             for entry in items_in_receipt:
