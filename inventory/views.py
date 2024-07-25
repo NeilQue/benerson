@@ -4,6 +4,7 @@ from django.http import HttpResponseRedirect
 from django.db.models import Q
 from django.db.models.functions import Lower
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 
 ## SUGGESTIONS ##
 # add add receipt in sidenav to make it starting point
@@ -55,7 +56,7 @@ def home(response):
 
     return render(response, 'inventory/home.html', context)
    
-def addItem(response):
+def addItem(response, action="/additem/"):
     if response.method == "POST":
         if response.POST.get("newItem"):
             new = Item(type="null", model="null", brand="null", specs="null", costPrice="null", srp="null", benerson_qty=0, qlinx_qty=0)
@@ -67,14 +68,15 @@ def addItem(response):
             new.specs = response.POST.get("description")
             new.costPrice = response.POST.get("costPrice")
             new.srp = response.POST.get("srp")
-            new.benerson_qty = response.POST.get("bQty")
-            new.qlinx_qty = response.POST.get("qQty")
+            if action == "/additem/":
+                new.benerson_qty = response.POST.get("bQty")
+                new.qlinx_qty = response.POST.get("qQty")
             
             new.save()
             
             # pop-up showing that item is saved
 
-    return render(response, 'inventory/additem.html', {})
+    return render(response, 'inventory/additem.html', {"action": action})
     
 #logs
 def searchReceipt(response):
@@ -90,7 +92,7 @@ def searchReceipt(response):
     
     return render(response, 'inventory/searchreceipt.html', {"receipt_set": all_receipts})
     
-def addReceipt(response, id):
+def addReceipt(response):
     if response.method == "POST":
         if response.POST.get("newReceipt"): 
             new = Receipt(number='null',date='1970-01-01',type='null',store='null', quantities='null')
@@ -140,7 +142,10 @@ def showReceipt(response, id):
             item_name = response.POST.get("newItem")
             item_quantity = response.POST.get("quantity")
             
-            item_brand, item_model, item_specs = item_name.split()
+            item_description = item_name.split()
+            item_brand = item_description[0]
+            item_model = item_description[1]
+            item_specs = ' '.join(item_description[2:])
             try:
                 item = Item.objects.get(brand=item_brand, model=item_model, specs=item_specs)
             
@@ -166,8 +171,7 @@ def showReceipt(response, id):
                             
                 item.save()
             except ObjectDoesNotExist:
-                #TODO
-                return HttpResponseRedirect('/additem', )
+                return addItem(response, f"/r{current_receipt.id}/")
                 
             except MultipleObjectsReturned:
                 pass
@@ -200,5 +204,6 @@ def showReceipt(response, id):
             current_receipt.save()
     
     return render(response, 'inventory/editreceipt.html', 
-        {"zipped_list": zip(list(current_receipt.item_set.all()), current_receipt.quantities.split('.')),
+        {"receipt": current_receipt,
+        "zipped_list": zip(list(current_receipt.item_set.all()), current_receipt.quantities.split('.')),
         "item_set": Item.objects.all()})
