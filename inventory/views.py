@@ -89,15 +89,13 @@ def searchReceipt(response):
 @login_required    
 def addReceipt(response):
     if response.method == "POST":
-        if response.POST.get("newReceipt"): 
-            new = Receipt(number='null',date='1970-01-01',type='null',store='null')
-            new.save()
+        if response.POST.get("newReceipt"):
+            number = response.POST.get("number")
+            type = response.POST.get("type")
+            date = response.POST.get("date")
+            store = response.POST.get("store")
             
-            new.number = response.POST.get("number")
-            new.type = response.POST.get("type")
-            new.date = response.POST.get("date")
-            new.store = response.POST.get("store")
-            
+            new = Receipt(number=number,date=date,type=type,store=store)
             new.save()
             
             return HttpResponseRedirect(f"/r{new.id}")
