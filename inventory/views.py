@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import Receipt, Item
+from .models import Receipt, Item, ItemInReceipt
 from django.http import HttpResponseRedirect
 from django.db.models import Q
 from django.db.models.functions import Lower
@@ -49,7 +49,7 @@ def home(response):
 
     return render(response, 'inventory/home.html', context)
    
-def addItem(response, action="/additem/"):
+def addItem(response, action="/additem/", brand_label="Brand", model_label="Model", description_label="Description"):
     if response.method == "POST":
         if response.POST.get("newItem"):
             new = Item(type="null", model="null", brand="null", specs="null", costPrice="null", srp="null", benerson_qty=0, qlinx_qty=0)
@@ -69,7 +69,8 @@ def addItem(response, action="/additem/"):
             
             # pop-up showing that item is saved
 
-    return render(response, 'inventory/additem.html', {"action": action})
+    return render(response, 'inventory/additem.html', {"action": action,
+                "brand_label":brand_label, "model_label":model_label, "description_label":description_label})
     
 #logs
 def searchReceipt(response):
@@ -88,15 +89,13 @@ def searchReceipt(response):
 @login_required    
 def addReceipt(response):
     if response.method == "POST":
-        if response.POST.get("newReceipt"): 
-            new = Receipt(number='null',date='1970-01-01',type='null',store='null', quantities='null')
-            new.save()
+        if response.POST.get("newReceipt"):
+            number = response.POST.get("number")
+            type = response.POST.get("type")
+            date = response.POST.get("date")
+            store = response.POST.get("store")
             
-            new.number = response.POST.get("number")
-            new.type = response.POST.get("type")
-            new.date = response.POST.get("date")
-            new.store = response.POST.get("store")
-            
+            new = Receipt(number=number,date=date,type=type,store=store)
             new.save()
             
             return HttpResponseRedirect(f"/r{new.id}")
@@ -127,85 +126,54 @@ def showItem(response, id):
 #edit receipt
 def showReceipt(response, id):
     current_receipt = Receipt.objects.get(id=id)
-    quantities_list = current_receipt.quantities.split('.')
-    items_list = list(current_receipt.item_set.all())
-    temp_string = ""
-    
+    items_in_receipt = ItemInReceipt.objects.filter(receipt=current_receipt)
+
     if response.method == "POST":
         if response.POST.get("addItem"):
-            item_name = response.POST.get("newItem")
+            item_brand = response.POST.get("brand")
+            item_model = response.POST.get("model")
+            item_specs = response.POST.get("specs")
             item_quantity = response.POST.get("quantity")
-            
-            item_description = item_name.split()
-            item_brand = item_description[0]
-            item_model = item_description[1]
-            item_specs = ' '.join(item_description[2:])
+            item_price = response.POST.get("price")
+
             try:
                 item = Item.objects.get(brand=item_brand, model=item_model, specs=item_specs)
-            
-                item.receipts.add(current_receipt)
 
-                if len(quantities_list) == 1 and quantities_list[0] == "null":
-                    current_receipt.quantities = item_quantity
-                else:
-                    current_receipt.quantities = '.'.join(quantities_list + [item_quantity])
-                current_receipt.save()
-
-                item_quantity = int(item_quantity)
-                
-                if current_receipt.type == "Supplier Invoice":
-                    item.benerson_qty = item.benerson_qty + item_quantity
-                    
-                else:
-                    if current_receipt.store == "Qlinx":
-                        item.qlinx_qty = item.qlinx_qty - item_quantity
-                        
-                        if current_receipt.type == "Transfer Slip":
-                            item.benerson_qty = item.benerson_qty + item_quantity
-                        
-                    if current_receipt.store == "Benerson":
-                        item.benerson_qty = item.benerson_qty - item_quantity
-                        
-                        if current_receipt.type == "Transfer Slip":
-                            item.qlinx_qty = item.qlinx_qty + item_quantity
-                            
-                item.save()
+                receipt_item = ItemInReceipt(item=item, receipt=current_receipt, quantity=item_quantity, price=item_price)
+                receipt_item.save()
             except ObjectDoesNotExist:
-                return addItem(response, f"/r{current_receipt.id}/")
-                
-            except MultipleObjectsReturned:
-                pass
-        
-        elif response.POST.get("save"):
-            for item, quantity in zip(items_list, quantities_list):
-                new_quantity = int(response.POST.get(f"{item.id}qty"))
+                return addItem(response, f"/r{current_receipt.id}/",
+                                item_brand, item_model, item_specs)
 
-                quantity = int(quantity)
-                
+        elif response.POST.get("save"):
+            for entry in items_in_receipt:
+                new_quantity = int(response.POST.get(f"{entry.id}qty"))
+
+                # update item model's quantity
                 if current_receipt.type == "Supplier Invoice":
-                    item.benerson_qty = item.benerson_qty - quantity + new_quantity
+                    item.benerson_qty = item.benerson_qty - entry.quantity + new_quantity
                     
                 else:
                     if current_receipt.store == "Qlinx":
-                        item.qlinx_qty = item.qlinx_qty + quantity - new_quantity
+                        item.qlinx_qty = item.qlinx_qty + entry.quantity - new_quantity
                         
                         if current_receipt.type == "Transfer Slip":
-                            item.benerson_qty = item.benerson_qty - quantity + new_quantity
+                            item.benerson_qty = item.benerson_qty - entry.quantity + new_quantity
                         
                     if current_receipt.store == "Benerson":
-                        item.benerson_qty = item.benerson_qty + quantity - new_quantity
+                        item.benerson_qty = item.benerson_qty + entry.quantity - new_quantity
                         
                         if current_receipt.type == "Transfer Slip":
-                            item.qlinx_qty = item.qlinx_qty - quantity + new_quantity
+                            item.qlinx_qty = item.qlinx_qty - entry.quantity + new_quantity
                             
                 item.save()
-                
-                temp_string += f"{new_quantity}."
-                
-            current_receipt.quantities = temp_string
-            current_receipt.save()
-    
+
+                # update item in receipt quantity as needed
+                entry.quantity = new_quantity
+                entry.price = response.POST.get(f"{entry.id}price")
+                entry.save()
+
     return render(response, 'inventory/editreceipt.html', 
         {"receipt": current_receipt,
-        "zipped_list": zip(list(current_receipt.item_set.all()), current_receipt.quantities.split('.')),
+        "items_in_receipt": items_in_receipt,
         "item_set": Item.objects.all()})

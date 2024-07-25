@@ -13,13 +13,11 @@ class Receipt(models.Model):
     type = models.CharField(max_length=100) # supplier invoice, transfer slip, sales invoice
     store = models.CharField(max_length=100) # source of stock
     # SupI >> supplier - Benerson; TS >> Benerson - Qlinx (vice-versa); SalI >> Benerson/Qlinx - customer
-    quantities = models.CharField(max_length=500)
     
     def __str__(self):
         return self.number
 
 class Item(models.Model):
-    receipts = models.ManyToManyField(Receipt)
     type = models.CharField(max_length=100) # laptop, desktop, computer part
     brand = models.CharField(max_length=100)
     model = models.CharField(max_length=200)
@@ -32,3 +30,9 @@ class Item(models.Model):
     
     def __str__(self):
         return f'{self.brand} {self.model} {self.specs}'
+
+class ItemInReceipt(models.Model):
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    receipt = models.ForeignKey(Receipt, on_delete=models.CASCADE)
+    quantity = models.IntegerField()
+    price = models.CharField(max_length=50)

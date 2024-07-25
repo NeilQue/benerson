@@ -8,20 +8,41 @@
 	<form method="POST" action="#" autocomplete="on">
 		{% csrf_token %}
 		<p>ITEMS</p>
-		{% for item, quantity in zipped_list %}
+		{% for entry in items_in_receipt %}
 			<li>
-				{{item}} : <input type="number" name="{{item.id}}qty" placeholder="{{quantity}}" autocomplete="off">
+				{{entry.item}}
+				<input type="number" name="{{entry.id}}qty" placeholder="{{entry.quantity}}" autocomplete="off">
+				<input name="{{entry.id}}price" placeholder="{{entry.price}}" autocomplete="off">
 			</li>
 		{% endfor %}
-		<label for="newItem">Add Item To List:</label>
-		<input list="itemList" name="newItem" id="newItem" placeholder="Add Item">
-		<datalist id = "itemList">
+		
+		<label>Add Item To List:</label>
+		<p><input list="brandList" name="brand" id="brand" placeholder="Brand">
+		<datalist id = "brandList">
 			{% for item in item_set %}
-			<option value="{{item}}">
+			<option value="{{item.brand}}">
 			{% endfor %}
 		</datalist>
-		<label>Quantity: </label>
-		<input type="number" name="quantity" placeholder="Quantity" autocomplete="off">
+
+		<input list="modelList" name="model" id="model" placeholder="Model">
+		<datalist id = "modelList">
+			{% for item in item_set %}
+			<option value="{{item.model}}">
+			{% endfor %}
+		</datalist>
+
+		<input list="specsList" name="specs" id="specs" placeholder="Specs">
+		<datalist id = "specsList">
+			{% for item in item_set %}
+			<option value="{{item.specs}}">
+			{% endfor %}
+		</datalist></p>
+
+		<p><label>Quantity: </label>
+		<input type="number" name="quantity" placeholder="Quantity" autocomplete="off"></p>
+		<p><label>Price: </label>
+		<input name="price" placeholder="Price" autocomplete="off"></p>
+
 		<p><button type="submit" name="addItem" value="addItem">Add Item</button></p>
 		<p><button type="submit" name="save" value="save">Save</button></p>
 	</form>
