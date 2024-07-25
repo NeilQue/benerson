@@ -38,19 +38,13 @@ def home(response):
         elif response.POST.get("searchItem"):
             search = [word for word in response.POST.get("item_searched").split()]
             
-            results = Item.objects.all()
-            
             for word in search:
-                results = results.filter(
+                all_items = all_items.filter(
                     Q(brand__contains=word) |
                     Q(type__contains=word) |
                     Q(model__contains=word) |
                     Q(specs__contains=word)
                 )
-
-            context["item_set"] = results
-                
-            return render(response, 'inventory/home.html', context)
                     
     context["item_set"] = all_items
 
@@ -150,8 +144,14 @@ def showReceipt(response, id):
                 item = Item.objects.get(brand=item_brand, model=item_model, specs=item_specs)
             
                 item.receipts.add(current_receipt)
-                current_receipt.quantities = '.'.join(quantities_list + [item_quantity])
+
+                if len(quantities_list) == 1 and quantities_list[0] == "null":
+                    current_receipt.quantities = item_quantity
+                else:
+                    current_receipt.quantities = '.'.join(quantities_list + [item_quantity])
                 current_receipt.save()
+
+                item_quantity = int(item_quantity)
                 
                 if current_receipt.type == "Supplier Invoice":
                     item.benerson_qty = item.benerson_qty + item_quantity
@@ -179,6 +179,8 @@ def showReceipt(response, id):
         elif response.POST.get("save"):
             for item, quantity in zip(items_list, quantities_list):
                 new_quantity = int(response.POST.get(f"{item.id}qty"))
+
+                quantity = int(quantity)
                 
                 if current_receipt.type == "Supplier Invoice":
                     item.benerson_qty = item.benerson_qty - quantity + new_quantity
