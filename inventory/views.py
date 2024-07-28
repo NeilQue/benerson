@@ -133,14 +133,41 @@ def showReceipt(response, id):
             item_brand = response.POST.get("brand")
             item_model = response.POST.get("model")
             item_specs = response.POST.get("specs")
-            item_quantity = response.POST.get("quantity")
+            item_quantity = int(response.POST.get("quantity"))
             item_price = response.POST.get("price")
 
             try:
                 item = Item.objects.get(brand=item_brand, model=item_model, specs=item_specs)
 
+                # update item model's quantity
+                if current_receipt.type == "Supplier Invoice":
+                    item.benerson_qty += item_quantity
+                    
+                else:
+                    if current_receipt.store == "Qlinx":
+                        item.qlinx_qty -= item_quantity
+                        
+                        if current_receipt.type == "Transfer Slip":
+                            item.benerson_qty += item_quantity
+                        
+                    if current_receipt.store == "Benerson":
+                        item.benerson_qty -= item_quantity
+                        
+                        if current_receipt.type == "Transfer Slip":
+                            item.qlinx_qty += item_quantity
+                            
+                item.save()
+
                 receipt_item = ItemInReceipt(item=item, receipt=current_receipt, quantity=item_quantity, price=item_price)
                 receipt_item.save()
+
+                if current_receipt.type != "Transfer Slip":
+                    current_price = float(current_receipt.total_price) + float(item_quantity) * float(item_price)
+                    current_price = str(round(current_price, 2))
+
+                    current_receipt.total_price = makeStrPriceTwoDecimalPlaces(current_price)
+                    current_receipt.save()
+
             except ObjectDoesNotExist:
                 return addItem(response, f"/r{current_receipt.id}/",
                                 item_brand, item_model, item_specs)
@@ -148,6 +175,8 @@ def showReceipt(response, id):
         elif response.POST.get("save"):
             for entry in items_in_receipt:
                 new_quantity = int(response.POST.get(f"{entry.id}qty"))
+                new_price = response.POST.get(f"{entry.id}price")
+                item = entry.item
 
                 # update item model's quantity
                 if current_receipt.type == "Supplier Invoice":
@@ -168,12 +197,29 @@ def showReceipt(response, id):
                             
                 item.save()
 
+                # update receipt's total price as needed
+                if current_receipt.type != "Transfer Slip":
+                    current_price = float(current_receipt.total_price) - float(entry.quantity) * float(entry.price)
+                    current_price = str(current_price + float(new_quantity) * float(new_price))
+
+                    current_receipt.total_price = makeStrPriceTwoDecimalPlaces(current_price)
+                    current_receipt.save()
+
                 # update item in receipt quantity as needed
                 entry.quantity = new_quantity
-                entry.price = response.POST.get(f"{entry.id}price")
+                entry.price = new_price
                 entry.save()
 
     return render(response, 'inventory/editreceipt.html', 
         {"receipt": current_receipt,
         "items_in_receipt": items_in_receipt,
         "item_set": Item.objects.all()})
+
+
+def makeStrPriceTwoDecimalPlaces(price):
+    if price[-3] == '.':
+        return price
+    elif price[-2] == '.':
+        return price + '0'
+    else:
+        return price + '.00'

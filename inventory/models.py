@@ -12,7 +12,9 @@ class Receipt(models.Model):
     date = models.DateField()
     type = models.CharField(max_length=100) # supplier invoice, transfer slip, sales invoice
     store = models.CharField(max_length=100) # source of stock
-    # SupI >> supplier - Benerson; TS >> Benerson - Qlinx (vice-versa); SalI >> Benerson/Qlinx - customer
+                                            # SupI >> supplier - Benerson; TS >> Benerson - Qlinx (vice-versa);
+                                            # SalI >> Benerson/Qlinx - customer
+    total_price = models.CharField(max_length=15, default="0.00")
     
     def __str__(self):
         return self.number

@@ -5,14 +5,16 @@
 	<p>Date: {{receipt.date}}</p>
 	<p>Type: {{receipt.type}}</p>
 	<p>Store From: {{receipt.store}}</p>
+	<p>Price: {{receipt.total_price}}</p>
+
 	<form method="POST" action="#" autocomplete="on">
 		{% csrf_token %}
 		<p>ITEMS</p>
 		{% for entry in items_in_receipt %}
 			<li>
 				{{entry.item}}
-				<input type="number" name="{{entry.id}}qty" placeholder="{{entry.quantity}}" autocomplete="off">
-				<input name="{{entry.id}}price" placeholder="{{entry.price}}" autocomplete="off">
+				<input type="number" name="{{entry.id}}qty" placeholder="{{entry.quantity}}" value="{{entry.quantity}}" autocomplete="off">
+				<input name="{{entry.id}}price" placeholder="{{entry.price}}" value="{{entry.price}}" autocomplete="off">
 			</li>
 		{% endfor %}
 		
