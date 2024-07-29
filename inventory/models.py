@@ -7,7 +7,24 @@ from django.db import models
     # def __str__(self):
         # return self.name
 
+class Customer(models.Model):
+    name = models.CharField(max_length=255)
+
+    # address
+    street = models.CharField(max_length=255, null=True)
+    barangay = models.CharField(max_length=50, null=True)
+    city = models.CharField(max_length=75)
+    province = models.CharField(max_length=75)
+    region = models.CharField(max_length=15)
+
+    demographic = models.CharField(max_length=255) # teacher, student, soldier
+                                                   # for companies / institutions: school, hospital, office
+
+    def __str__(self):
+        return self.name
+
 class Receipt(models.Model):
+    customer = models.ForeignKey(Customer, on_delete=models.PROTECT, null=True)
     number = models.CharField(max_length=50)
     date = models.DateField()
     type = models.CharField(max_length=100) # supplier invoice, transfer slip, sales invoice
@@ -17,7 +34,7 @@ class Receipt(models.Model):
     total_price = models.CharField(max_length=15, default="0.00")
     
     def __str__(self):
-        return self.number
+        return f'Receipt #{self.number}'
 
 class Item(models.Model):
     type = models.CharField(max_length=100) # laptop, desktop, computer part
@@ -38,3 +55,6 @@ class ItemInReceipt(models.Model):
     receipt = models.ForeignKey(Receipt, on_delete=models.CASCADE)
     quantity = models.IntegerField()
     price = models.CharField(max_length=50)
+
+    def __str__(self):
+        return f'{self.item} in {self.receipt}'

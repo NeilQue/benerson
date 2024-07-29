@@ -31,9 +31,9 @@
 		</datalist>
 
 		{% if model == "Model" %}
-			<p><input list="modelList" name="model" id="model" placeholder="{{model}}">
+			<input list="modelList" name="model" id="model" placeholder="{{model}}">
 		{% else %}
-			<p><input list="modelList" name="model" id="model" placeholder="{{model}}" value="{{model}}">
+			<input list="modelList" name="model" id="model" placeholder="{{model}}" value="{{model}}">
 		{% endif %}
 		<datalist id = "modelList">
 			{% for item in item_set %}
@@ -42,9 +42,9 @@
 		</datalist>
 
 		{% if specs == "Specs" %}
-			<p><input list="specsList" name="specs" id="specs" placeholder="{{specs}}">
+			<input list="specsList" name="specs" id="specs" placeholder="{{specs}}">
 		{% else %}
-			<p><input list="specsList" name="specs" id="specs" placeholder="{{specs}}" value="{{specs}}">
+			<input list="specsList" name="specs" id="specs" placeholder="{{specs}}" value="{{specs}}">
 		{% endif %}
 		<datalist id = "specsList">
 			{% for item in item_set %}

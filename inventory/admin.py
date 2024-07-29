@@ -1,6 +1,10 @@
 from django.contrib import admin
 
-from .models import Receipt, Item, ItemInReceipt
+from .models import Customer, Receipt, Item, ItemInReceipt
+
+
+class CustomerAdmin(admin.ModelAdmin):
+	model = Customer
 
 
 class ReceiptAdmin(admin.ModelAdmin):
@@ -15,6 +19,7 @@ class ItemInReceiptAdmin(admin.ModelAdmin):
 	model = ItemInReceipt
 
 
+admin.site.register(Customer, CustomerAdmin)
 admin.site.register(Receipt, ReceiptAdmin)
 admin.site.register(Item, ItemAdmin)
 admin.site.register(ItemInReceipt, ItemInReceiptAdmin)
