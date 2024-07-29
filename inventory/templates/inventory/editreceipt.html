@@ -19,21 +19,33 @@
 		{% endfor %}
 		
 		<label>Add Item To List:</label>
-		<p><input list="brandList" name="brand" id="brand" placeholder="Brand">
+		{% if brand == "Brand" %}
+			<p><input list="brandList" name="brand" id="brand" placeholder="{{brand}}">
+		{% else %}
+			<p><input list="brandList" name="brand" id="brand" placeholder="{{brand}}" value="{{brand}}">
+		{% endif %}
 		<datalist id = "brandList">
 			{% for item in item_set %}
 			<option value="{{item.brand}}">
 			{% endfor %}
 		</datalist>
 
-		<input list="modelList" name="model" id="model" placeholder="Model">
+		{% if model == "Model" %}
+			<p><input list="modelList" name="model" id="model" placeholder="{{model}}">
+		{% else %}
+			<p><input list="modelList" name="model" id="model" placeholder="{{model}}" value="{{model}}">
+		{% endif %}
 		<datalist id = "modelList">
 			{% for item in item_set %}
 			<option value="{{item.model}}">
 			{% endfor %}
 		</datalist>
 
-		<input list="specsList" name="specs" id="specs" placeholder="Specs">
+		{% if specs == "Specs" %}
+			<p><input list="specsList" name="specs" id="specs" placeholder="{{specs}}">
+		{% else %}
+			<p><input list="specsList" name="specs" id="specs" placeholder="{{specs}}" value="{{specs}}">
+		{% endif %}
 		<datalist id = "specsList">
 			{% for item in item_set %}
 			<option value="{{item.specs}}">

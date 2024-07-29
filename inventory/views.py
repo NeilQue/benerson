@@ -9,7 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 ## SUGGESTIONS ##
 # add add receipt in sidenav to make it starting point
 
-def home(response):
+def home(request):
     all_items = Item.objects.order_by(Lower('brand'), Lower('model'))
     context = {}
 
@@ -21,21 +21,21 @@ def home(response):
 
     context["total_laptops"] = total_laptops
     
-    if response.method == "POST":
-        if response.POST.get("editItem"):
+    if request.method == "POST":
+        if request.POST.get("editItem"):
             for item in all_items:
-                if response.POST.get("c" + str(item.id)) == "clicked":
+                if request.POST.get("c" + str(item.id)) == "clicked":
                     return HttpResponseRedirect('/i%i' %item.id)
             
-        elif response.POST.get("delItem"):
+        elif request.POST.get("delItem"):
             for item in all_items:
-                if response.POST.get("c" + str(item.id)) == "clicked":
+                if request.POST.get("c" + str(item.id)) == "clicked":
                     item.delete()
                     
             return HttpResponseRedirect("/inventory")
                     
-        elif response.POST.get("searchItem"):
-            search = [word for word in response.POST.get("item_searched").split()]
+        elif request.POST.get("searchItem"):
+            search = [word for word in request.POST.get("item_searched").split()]
             
             for word in search:
                 all_items = all_items.filter(
@@ -47,94 +47,124 @@ def home(response):
                     
     context["item_set"] = all_items
 
-    return render(response, 'inventory/home.html', context)
+    return render(request, 'inventory/home.html', context)
    
-def addItem(response, action="/additem/", brand_label="Brand", model_label="Model", description_label="Description"):
-    if response.method == "POST":
-        if response.POST.get("newItem"):
-            new = Item(type="null", model="null", brand="null", specs="null", costPrice="null", srp="null", benerson_qty=0, qlinx_qty=0)
-            new.save()
-        
-            new.type = response.POST.get("type")
-            new.model = response.POST.get("model")
-            new.brand = response.POST.get("brand")
-            new.specs = response.POST.get("description")
-            new.costPrice = response.POST.get("costPrice")
-            new.srp = response.POST.get("srp")
-            if action == "/additem/":
-                new.benerson_qty = response.POST.get("bQty")
-                new.qlinx_qty = response.POST.get("qQty")
+def addItem(request, action):
+    if request.method == "POST":
+        if request.POST.get("newItem"):
+            type = request.POST.get("type")
+            model = request.POST.get("model")
+            brand = request.POST.get("brand")
+            specs = request.POST.get("description")
+            costPrice = makeStrPriceTwoDecimalPlaces(request.POST.get("costPrice"))
+            srp = makeStrPriceTwoDecimalPlaces(request.POST.get("srp"))
+            benerson_qty = 0
+            qlinx_qty = 0
+
+            next_url = f"/{action}"
+
+            if action == "inventory":
+                benerson_qty = request.POST.get("bQty")
+                qlinx_qty = request.POST.get("qQty")
             
+            new = Item(type=type, model=model, brand=brand, specs=specs, costPrice=costPrice, srp=srp, benerson_qty=benerson_qty, qlinx_qty=qlinx_qty)
             new.save()
             
             # pop-up showing that item is saved
 
-    return render(response, 'inventory/additem.html', {"action": action,
-                "brand_label":brand_label, "model_label":model_label, "description_label":description_label})
+            return HttpResponseRedirect(next_url)
+
+    current_brand = "Brand"
+    current_model = "Model"
+    current_specs = "Specs"
+
+    if 'brand' in request.session:
+        if request.session['brand'] != "null":
+            current_brand = request.session.get('brand')
+            current_model = request.session.get('model')
+            current_specs = request.session.get('specs')
+
+    return render(request, 'inventory/additem.html', {"action": action, "brand": current_brand, "model": current_model, "specs": current_specs})
     
 #logs
-def searchReceipt(response):
+def searchReceipt(request):
     all_receipts = Receipt.objects.order_by('date').reverse()
     
-    if response.method == "POST":
-        if response.POST.get("search_receipt"):
-            search = response.POST.get("receipt_searched")
+    if request.method == "POST":
+        if request.POST.get("search_receipt"):
+            search = request.POST.get("receipt_searched")
             
             results = Receipt.objects.filter(number=search)
             
-            return render(response, 'inventory/searchreceipt.html', {"receipt_set": results})
+            return render(request, 'inventory/searchreceipt.html', {"receipt_set": results})
     
-    return render(response, 'inventory/searchreceipt.html', {"receipt_set": all_receipts})
+    return render(request, 'inventory/searchreceipt.html', {"receipt_set": all_receipts})
 
 @login_required    
-def addReceipt(response):
-    if response.method == "POST":
-        if response.POST.get("newReceipt"):
-            number = response.POST.get("number")
-            type = response.POST.get("type")
-            date = response.POST.get("date")
-            store = response.POST.get("store")
+def addReceipt(request):
+    if request.method == "POST":
+        if request.POST.get("newReceipt"):
+            number = request.POST.get("number")
+            type = request.POST.get("type")
+            date = request.POST.get("date")
+            store = request.POST.get("store")
             
             new = Receipt(number=number,date=date,type=type,store=store)
             new.save()
             
             return HttpResponseRedirect(f"/r{new.id}")
         
-    return render(response, 'inventory/addreceipt.html', {})
+    return render(request, 'inventory/addreceipt.html', {})
    
 #edit item
-def showItem(response, id):
+def showItem(request, id):
     current_item = Item.objects.get(id=id)
     
-    if response.method == "POST":
-        if response.POST.get("editItem"):
-            current_item.type = response.POST.get("type")
-            current_item.model = response.POST.get("model")
-            current_item.brand = response.POST.get("brand")
-            current_item.specs = response.POST.get("description")
-            current_item.costPrice = response.POST.get("costPrice")
-            current_item.srp = response.POST.get("srp")
-            current_item.benerson_qty = response.POST.get("bQty")
-            current_item.qlinx_qty = response.POST.get("qQty")
+    if request.method == "POST":
+        if request.POST.get("editItem"):
+            current_item.type = request.POST.get("type")
+            current_item.model = request.POST.get("model")
+            current_item.brand = request.POST.get("brand")
+            current_item.specs = request.POST.get("description")
+            current_item.costPrice = makeStrPriceTwoDecimalPlaces(request.POST.get("costPrice"))
+            current_item.srp = makeStrPriceTwoDecimalPlaces(request.POST.get("srp"))
+            current_item.benerson_qty = request.POST.get("bQty")
+            current_item.qlinx_qty = request.POST.get("qQty")
             
             current_item.save()
             
             # pop-up showing that item is edited
+
+            return HttpResponseRedirect("/inventory")
     
-    return render(response, 'inventory/edititem.html', {"item":current_item})
+    return render(request, 'inventory/edititem.html', {"item":current_item})
 
 #edit receipt
-def showReceipt(response, id):
+def showReceipt(request, id):
     current_receipt = Receipt.objects.get(id=id)
     items_in_receipt = ItemInReceipt.objects.filter(receipt=current_receipt)
 
-    if response.method == "POST":
-        if response.POST.get("addItem"):
-            item_brand = response.POST.get("brand")
-            item_model = response.POST.get("model")
-            item_specs = response.POST.get("specs")
-            item_quantity = int(response.POST.get("quantity"))
-            item_price = response.POST.get("price")
+    current_brand = "Brand"
+    current_model = "Model"
+    current_specs = "Specs"
+
+    if 'brand' in request.session:
+        if request.session['brand'] != "null":
+            current_brand = request.session.get('brand')
+            current_model = request.session.get('model')
+            current_specs = request.session.get('specs')
+
+            request.session['brand'] = "null"
+            request.session['model'] = "null"
+            request.session['specs'] = "null"
+
+    if request.method == "POST":
+        if request.POST.get("addItem"):
+            item_brand = request.POST.get("brand")
+            item_model = request.POST.get("model")
+            item_specs = request.POST.get("specs")
+            item_quantity = int(request.POST.get("quantity"))
+            item_price = makeStrPriceTwoDecimalPlaces(request.POST.get("price"))
 
             try:
                 item = Item.objects.get(brand=item_brand, model=item_model, specs=item_specs)
@@ -163,19 +193,20 @@ def showReceipt(response, id):
 
                 if current_receipt.type != "Transfer Slip":
                     current_price = float(current_receipt.total_price) + float(item_quantity) * float(item_price)
-                    current_price = str(round(current_price, 2))
 
-                    current_receipt.total_price = makeStrPriceTwoDecimalPlaces(current_price)
+                    current_receipt.total_price = makeStrPriceTwoDecimalPlaces(str(current_price))
                     current_receipt.save()
 
             except ObjectDoesNotExist:
-                return addItem(response, f"/r{current_receipt.id}/",
-                                item_brand, item_model, item_specs)
+                request.session['brand'] = item_brand
+                request.session['model'] = item_model
+                request.session['specs'] = item_specs
+                return HttpResponseRedirect(f"/additem-action=r{current_receipt.id}")
 
-        elif response.POST.get("save"):
+        elif request.POST.get("save"):
             for entry in items_in_receipt:
-                new_quantity = int(response.POST.get(f"{entry.id}qty"))
-                new_price = response.POST.get(f"{entry.id}price")
+                new_quantity = int(request.POST.get(f"{entry.id}qty"))
+                new_price = request.POST.get(f"{entry.id}price")
                 item = entry.item
 
                 # update item model's quantity
@@ -207,19 +238,21 @@ def showReceipt(response, id):
 
                 # update item in receipt quantity as needed
                 entry.quantity = new_quantity
-                entry.price = new_price
+                entry.price = makeStrPriceTwoDecimalPlaces(new_price)
                 entry.save()
 
-    return render(response, 'inventory/editreceipt.html', 
-        {"receipt": current_receipt,
-        "items_in_receipt": items_in_receipt,
-        "item_set": Item.objects.all()})
+    return render(request, 'inventory/editreceipt.html', 
+        {"receipt": current_receipt, "items_in_receipt": items_in_receipt, "item_set": Item.objects.all(),
+         "brand": current_brand, "model": current_model, "specs": current_specs})
 
-
+# helper function to make prices have two decimal places
 def makeStrPriceTwoDecimalPlaces(price):
-    if price[-3] == '.':
-        return price
+    offset = 0.0001
+    price = str(round(float(price) + offset,2))
+
+    if '.' not in price:
+        return price + '.00'
     elif price[-2] == '.':
         return price + '0'
     else:
-        return price + '.00'
+        return price

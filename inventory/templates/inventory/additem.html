@@ -2,18 +2,28 @@
 
 {% block content %}
 <h2 style="padding-bottom:10px">Add New Item</h2>
-<form method="POST" action="{{action}}" autocomplete="on">
+<form method="POST" autocomplete="on">
 	{% csrf_token %}
 	<p><input type="text", name="type", placeholder="Laptop/Desktop Set/PC Part" autofocus></p>
-	<p><input type="text", name="brand", placeholder="{{brand_label}}"></p>	
-	<p><input type="text", name="model", placeholder="{{model_label}}"></p>
-	<p><input type="text", name="description", placeholder="{{description_label}}"></p>
+
+	{% if brand == "Brand" %}
+		<p><input type="text", name="brand", placeholder="{{brand}}"></p>	
+		<p><input type="text", name="model", placeholder="{{model}}"></p>
+		<p><input type="text", name="description", placeholder="{{specs}}"></p>
+	{% else %}
+		<p><input type="text", name="brand", placeholder="{{brand}}" value="{{brand}}"></p>	
+		<p><input type="text", name="model", placeholder="{{model}}" value="{{model}}"></p>
+		<p><input type="text", name="description", placeholder="{{specs}}" value="{{specs}}"></p>
+	{% endif %}
+
 	<p><input type="text", name="costPrice", placeholder="Cost"></p>
 	<p><input type="text", name="srp", placeholder="SRP"></p>
-	{% if action == "/additem/" %}
+
+	{% if action == "inventory" %}
 		<p><input type="number", name="bQty", placeholder="Benerson Quantity", autocomplete="off"></p>
 		<p><input type="number", name="qQty", placeholder="Qlinx Quantity", autocomplete="off"></p>
 	{% endif %}
+
 	<p><button type="submit", name="newItem", value="newItem">Add Item</button></p>
 </form>
 {% endblock %}

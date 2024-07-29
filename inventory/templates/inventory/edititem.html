@@ -2,7 +2,7 @@
 
 {% block content %}
 <h2 style="padding-bottom:10px">Edit Item</h2>
-<form method="POST" action="#" autocomplete="on">
+<form method="POST" autocomplete="on">
 	{% csrf_token %}
 	<p>Type: <input type="text", name="type", value="{{item.type}}" autofocus></p>
 	<p>Brand: <input type="text", name="brand", value="{{item.brand}}"></p>
