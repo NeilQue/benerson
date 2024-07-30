@@ -24,8 +24,8 @@
 		{% endfor %}
 
 		{% if message != "" %}
-			<label style="color:red">{{message}}</label>
-			<br><br>
+			<label style="color:red">{{message|linebreaks}}</label>
+			<br>
 		{% endif %}
 
 		<label>Add Item To List:</label>

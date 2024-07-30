@@ -211,7 +211,7 @@ def showReceipt(request, id):
                             if current_receipt.type == "Transfer Slip":
                                 item.benerson_qty += item_quantity
                         else:
-                            message = f"There are only {item.qlinx_qty} {item}'s in Qlinx.\nEnter a quantity less than or equal to {item.qlinx_qty + entry.quantity} for {item}"
+                            message = f"There are only {item.qlinx_qty} {item}'s in Qlinx. Enter a quantity less than or equal to {item.qlinx_qty + entry.quantity} for {item}."
                         
                     if current_receipt.store == "Benerson":
                         if item_quantity <= item.benerson_qty:
@@ -220,7 +220,7 @@ def showReceipt(request, id):
                             if current_receipt.type == "Transfer Slip":
                                 item.qlinx_qty += item_quantity
                         else:
-                            message = f"There are only {item.benerson_qty} {item}'s in Benerson.\nEnter a quantity less than or equal to {item.benerson_qty + entry.quantity} for {item}"
+                            message = f"There are only {item.benerson_qty} {item}'s in Benerson. Enter a quantity less than or equal to {item.benerson_qty + entry.quantity} for {item}."
                 
                 if message == "":    
                     item.save()
@@ -267,7 +267,7 @@ def showReceipt(request, id):
                             if message != "":
                                 new_message = "\n"
 
-                            new_message += f"There are only {item.qlinx_qty + entry.quantity} {item}'s in Qlinx.\nEnter a quantity less than or equal to {item.qlinx_qty + entry.quantity} for {item}"
+                            new_message += f"There are only {item.qlinx_qty + entry.quantity} {item}'s in Qlinx. Enter a quantity less than or equal to {item.qlinx_qty + entry.quantity} for {item}."
                             message += new_message
                         
                     if current_receipt.store == "Benerson":
@@ -280,7 +280,7 @@ def showReceipt(request, id):
                             if message != "":
                                 new_message = "\n"
 
-                            new_message += f"There are only {item.benerson_qty + entry.quantity} {item}'s in Benerson.\nEnter a quantity less than or equal to {item.benerson_qty + entry.quantity} for {item}"
+                            new_message += f"There are only {item.benerson_qty + entry.quantity} {item}'s in Benerson. Enter a quantity less than or equal to {item.benerson_qty + entry.quantity} for {item}."
                             message += new_message
 
                 if new_message == "":
