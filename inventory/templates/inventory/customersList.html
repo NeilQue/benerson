@@ -1,0 +1,56 @@
+{% extends 'inventory/base.html' %}
+
+{% block search %}
+<form class="d-flex" method="POST">
+  {% csrf_token %}
+  <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search" name="customer_searched">
+  <button class="btn btn-dark" type="submit" name="searchCustomer" value="searchCustomer">Search</button>
+</form>
+{% endblock %}
+
+{% block content %}
+<form method="POST">
+	{% csrf_token %}
+	<!-- row of buttons on top -->
+	<div class="row justify-content-center">
+		<h3>List of Customers</h3>
+		<div class="col-auto">
+			<button type="submit" name="addCustomer", value="addCustomer">Add Customer</button>
+		</div>
+		<div class="col-auto">
+			<button type="submit", name="editCustomer", value="editCustomer">Edit Customer</button>
+		</div>
+	</div>
+	
+	<!-- auto-generated table needing variables, loops -->
+	<table class="table table-striped table-bordered border-dark" style="margin-top:20px">
+		<thead>
+			<tr>
+				<th scope="col"></th>
+				<th scope="col">Name</th>
+				<th class="col-1" scope="col">Demographic</th>
+				<th scope="col">Street</th>
+				<th scope="col">Barangay</th>
+				<th class="col-1" scope="col">City</th>
+				<th class="col-1" scope="col">Province</th>
+				<th class="col-1" scope="col">Region</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for customer in customer_set %}
+				<tr>
+					<td><input type="checkbox", value="clicked", name="c{{customer.id}}"></td>
+					<td>{{customer.name}}</td>
+					<td>{{customer.demographic}}</td>
+					<td>{{customer.street}}</td>
+					<td>{{customer.barangay}}</td>
+					<td>{{customer.city}}</td>
+					<td>{{customer.province}}</td>
+					<td>{{customer.region}}</td>
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	
+</form>
+{% endblock %}

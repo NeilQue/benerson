@@ -303,6 +303,37 @@ def showReceipt(request, id):
         {"receipt": current_receipt, "items_in_receipt": items_in_receipt, "item_set": Item.objects.all(),
          "brand": current_brand, "model": current_model, "specs": current_specs, "message": message})
 
+def customersList(request):
+    all_customers = Customer.objects.order_by('name')
+    context = {}
+
+    if request.method == "POST":
+        if request.POST.get("addCustomer"):
+            return HttpResponseRedirect('/addcustomer-action=customersList')
+
+        elif request.POST.get("editCustomer"):
+            for customer in all_customers:
+                if request.POST.get("c" + str(customer.id)) == "clicked":
+                    return HttpResponseRedirect('/c%i' %customer.id)
+                    
+        elif request.POST.get("searchCustomer"):
+            search = [word for word in request.POST.get("customer_searched").split()]
+            
+            for word in search:
+                all_customers = all_customers.filter(
+                    Q(name__contains=word) |
+                    Q(demographic__contains=word) |
+                    Q(street__contains=word) |
+                    Q(barangay__contains=word) |
+                    Q(city__contains=word) |
+                    Q(province__contains=word) |
+                    Q(region__contains=word)
+                )
+                    
+    context["customer_set"] = all_customers
+
+    return render(request, 'inventory/customersList.html', context)
+
 def addCustomer(request, action):
     if request.method == "POST":
         if request.POST.get("newCustomer"):
@@ -321,8 +352,8 @@ def addCustomer(request, action):
 
             next_url = "/"
 
-            if action == "addcustomer":
-                next_url += f"{action}-action=addcustomer"
+            if action == "customersList":
+                next_url += action
 
             return HttpResponseRedirect(next_url)
 
@@ -333,6 +364,28 @@ def addCustomer(request, action):
             current_customer = request.session.get('customer')
 
     return render(request, 'inventory/addcustomer.html', {"customerName": current_customer})
+
+#edit customer
+def showCustomer(request, id):
+    current_customer = Customer.objects.get(id=id)
+    
+    if request.method == "POST":
+        if request.POST.get("editCustomer"):
+            current_customer.name = request.POST.get("name")
+            current_customer.demographic = request.POST.get("demographic")
+            current_customer.street = request.POST.get("street")
+            current_customer.barangay = request.POST.get("barangay")
+            current_customer.city = request.POST.get("city")
+            current_customer.province = request.POST.get("province")
+            current_customer.region = request.POST.get("region")
+            
+            current_customer.save()
+            
+            # pop-up showing that customer is edited
+
+            return HttpResponseRedirect("/customersList")
+    
+    return render(request, 'inventory/editcustomer.html', {"customer":current_customer})
 
 # helper function to make prices have two decimal places
 def makeStrPriceTwoDecimalPlaces(price):

@@ -1,0 +1,18 @@
+{% extends 'inventory/base.html' %}
+
+{% block content %}
+<h2 style="padding-bottom:5px">Edit Customer</h2>
+<form method="POST" autocomplete="on">
+	{% csrf_token %}
+	<label style="color:red; padding-bottom:10px;">*required fields</label>
+
+	<p>*Name: <input type="text", name="name", value="{{customer.name}}" autofocus required></p>
+	<p>*Demographic: <input type="text", name="demographic", value="{{customer.demographic}}" required></p>
+	<p>Street: <input type="text", name="street", value="{{customer.street}}"></p>
+	<p>Barangay: <input type="text", name="barangay", value="{{customer.barangay}}"></p>
+	<p>*City: <input type="text", name="city", value="{{customer.city}}" required></p>
+	<p>*Province: <input type="text", name="province", value="{{customer.province}}" required></p>
+	<p>*Region: <input type="text", name="region", value="{{customer.region}}" required></p>
+	<p><button type="submit", name="editCustomer", value="editCustomer">Edit Customer</button></p>
+</form>
+{% endblock %}
