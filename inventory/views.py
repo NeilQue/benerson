@@ -300,7 +300,7 @@ def addCustomer(request, action):
             next_url = "/"
 
             if action == "addcustomer":
-                next_url += f"{action}-action=/addcustomer"
+                next_url += f"{action}-action=addcustomer"
 
             return HttpResponseRedirect(next_url)
 
