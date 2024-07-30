@@ -17,15 +17,15 @@
 		</div>
 
 		{% if number == "Receipt Number" %}
-			<p><input type="text", name="number", placeholder="{{number}}"></p>
-			<p><input type="text", name="store", placeholder="{{store}}"></p>
-			<p><input type="date", name="date", placeholder="{{date}}"></p>
-			<p><input list="customerList", type="text", name="customerName", placeholder="{{customer}}"></p>
+			<p><input type="text", name="number", placeholder="{{number}}" required></p>
+			<p><input type="text", name="store", placeholder="{{store}}" required></p>
+			<p><input type="date", name="date", placeholder="{{date}}" required></p>
+			<p><input list="customerList", type="text", name="customerName", placeholder="{{customer}}" required></p>
 		{% else %}
-			<p><input type="text", name="number", placeholder="{{number}}", value="{{number}}"></p>
-			<p><input type="text", name="store", placeholder="{{store}}", value="{{store}}"></p>
-			<p><input type="date", name="date", placeholder="{{date}}", value="{{date}}"></p>
-			<p><input list="customerList", type="text", name="customerName", placeholder="{{customer}}", value="{{customer}}"></p>
+			<p><input type="text", name="number", placeholder="{{number}}", value="{{number}}" required></p>
+			<p><input type="text", name="store", placeholder="{{store}}", value="{{store}}" required></p>
+			<p><input type="date", name="date", placeholder="{{date}}", value="{{date}}" required></p>
+			<p><input list="customerList", type="text", name="customerName", placeholder="{{customer}}", value="{{customer}}" required></p>
 		{% endif %}
 		<datalist id = "customerList">
 			{% for customer in customer_set %}

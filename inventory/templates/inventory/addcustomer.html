@@ -6,19 +6,19 @@
 	{% csrf_token %}
 	<label style="color:red; padding-bottom:10px;">*required fields</label>
 	{% if customerName == "*Customer Name (FirstName LastName) / Name of Company" %}
-		<p><input type="text", name="name", placeholder="{{customerName}}" autofocus></p>
+		<p><input type="text", name="name", placeholder="{{customerName}}" autofocus required></p>
 	{% else %}
-		<p><input type="text", name="name", placeholder="{{customerName}}" value = "{{customerName}}" autofocus></p>
+		<p><input type="text", name="name", placeholder="{{customerName}}" value = "{{customerName}}" autofocus required></p>
 	{% endif %}
 
-	<p><input type="text", name="demographic", placeholder="*Demographic (e.g. Student, Teacher, School, Hospital)"></p>
+	<p><input type="text", name="demographic", placeholder="*Demographic (e.g. Student, Teacher, School, Hospital)" required></p>
 
 	<label style="font-size:20px;">Customer Address</label>
 	<p><input type="text", name="street", placeholder="Street"></p>
 	<p><input type="text", name="barangay", placeholder="Barangay (e.g. Poblacion, Maliwalo)"></p>
-	<p><input type="text", name="city", placeholder="*City"></p>
-	<p><input type="text", name="province", placeholder="*Province"></p>
-	<p><input type="text", name="region", placeholder="*Region (e.g. Region III, NCR)"></p>
+	<p><input type="text", name="city", placeholder="*City" required></p>
+	<p><input type="text", name="province", placeholder="*Province" required></p>
+	<p><input type="text", name="region", placeholder="*Region (e.g. Region III, NCR)" required></p>
 
 	<p><button type="submit", name="newCustomer", value="newCustomer">Add Customer</button></p>
 </form>
