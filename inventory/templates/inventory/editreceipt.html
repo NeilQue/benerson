@@ -6,6 +6,10 @@
 	<p>Type: {{receipt.type}}</p>
 	<p>Store From: {{receipt.store}}</p>
 	<p>Price: {{receipt.total_price}}</p>
+	
+	{% if receipt.customer != None %}
+		<p>Customer: {{receipt.customer}}</p>
+	{% endif %}
 
 	<form method="POST" action="#" autocomplete="on">
 		{% csrf_token %}

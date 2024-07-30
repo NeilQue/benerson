@@ -8,4 +8,5 @@ urlpatterns = [
     path('r<int:id>/', views.showReceipt, name='ShowReceipt'),
     path('i<int:id>/', views.showItem, name='ShowItem'),
     path('', views.addReceipt, name='AddReceipt'),
+    path('addcustomer-action=<str:action>/', views.addCustomer, name='AddCustomer')
 ]

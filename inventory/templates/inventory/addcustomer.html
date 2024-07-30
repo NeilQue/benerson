@@ -1,0 +1,25 @@
+{% extends 'inventory/base.html' %}
+
+{% block content %}
+<h2 style="padding-bottom:5px">Add New Customer</h2>
+<form method="POST" autocomplete="on">
+	{% csrf_token %}
+	<label style="color:red; padding-bottom:10px;">*required fields</label>
+	{% if customerName == "*Customer Name (FirstName LastName) / Name of Company" %}
+		<p><input type="text", name="name", placeholder="{{customerName}}" autofocus></p>
+	{% else %}
+		<p><input type="text", name="name", placeholder="{{customerName}}" value = "{{customerName}}" autofocus></p>
+	{% endif %}
+
+	<p><input type="text", name="demographic", placeholder="*Demographic (e.g. Student, Teacher, School, Hospital)"></p>
+
+	<label style="font-size:20px;">Customer Address</label>
+	<p><input type="text", name="street", placeholder="Street"></p>
+	<p><input type="text", name="barangay", placeholder="Barangay (e.g. Poblacion, Maliwalo)"></p>
+	<p><input type="text", name="city", placeholder="*City"></p>
+	<p><input type="text", name="province", placeholder="*Province"></p>
+	<p><input type="text", name="region", placeholder="*Region (e.g. Region III, NCR)"></p>
+
+	<p><button type="submit", name="newCustomer", value="newCustomer">Add Customer</button></p>
+</form>
+{% endblock %}

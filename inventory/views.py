@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import Receipt, Item, ItemInReceipt
+from .models import Customer, Receipt, Item, ItemInReceipt
 from django.http import HttpResponseRedirect
 from django.db.models import Q
 from django.db.models.functions import Lower
@@ -9,6 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 ## SUGGESTIONS ##
 # add add receipt in sidenav to make it starting point
 
+# inventory
 def home(request):
     all_items = Item.objects.order_by(Lower('brand'), Lower('model'))
     context = {}
@@ -61,8 +62,6 @@ def addItem(request, action):
             benerson_qty = 0
             qlinx_qty = 0
 
-            next_url = f"/{action}"
-
             if action == "inventory":
                 benerson_qty = request.POST.get("bQty")
                 qlinx_qty = request.POST.get("qQty")
@@ -71,6 +70,8 @@ def addItem(request, action):
             new.save()
             
             # pop-up showing that item is saved
+
+            next_url = f"/{action}"
 
             return HttpResponseRedirect(next_url)
 
@@ -102,19 +103,51 @@ def searchReceipt(request):
 
 @login_required    
 def addReceipt(request):
+    current_number = "Receipt Number"
+    current_date = "Date"
+    current_store = "From Which Store/Supplier?"
+    current_customer = "Customer Name (FirstName LastName) / Name of Company"
+
+    if 'number' in request.session:
+        if request.session['number'] != "null":
+            current_number = request.session.get('number')
+            current_date = request.session.get('date')
+            current_store = request.session.get('store')
+            current_customer = request.session.get('customer')
+
+            request.session['number'] = "null"
+            request.session['date'] = "null"
+            request.session['store'] = "null"
+            request.session['customer'] = "null"
+
     if request.method == "POST":
         if request.POST.get("newReceipt"):
             number = request.POST.get("number")
             type = request.POST.get("type")
             date = request.POST.get("date")
             store = request.POST.get("store")
-            
             new = Receipt(number=number,date=date,type=type,store=store)
+            
+            if type == "Sales Invoice":
+                try:
+                    customer = Customer.objects.get(name=request.POST.get("customerName"))
+                    new.customer = customer
+                except ObjectDoesNotExist:
+                    request.session['number'] = number
+                    request.session['date'] = date
+                    request.session['store'] = store
+                    request.session['customer'] = request.POST.get("customerName")
+                    return HttpResponseRedirect("/addcustomer-action=''") # add customer view
+                except MultipleObjectsReturned:
+                    pass
+
             new.save()
             
             return HttpResponseRedirect(f"/r{new.id}")
         
-    return render(request, 'inventory/addreceipt.html', {})
+    return render(request, 'inventory/addreceipt.html',
+        {'customer_set': Customer.objects.all(),
+        'number': current_number, 'date': current_date, 'store': current_store, 'customer': current_customer})
    
 #edit item
 def showItem(request, id):
@@ -203,6 +236,9 @@ def showReceipt(request, id):
                 request.session['specs'] = item_specs
                 return HttpResponseRedirect(f"/additem-action=r{current_receipt.id}")
 
+            except MultipleObjectsReturned:
+                pass
+
         elif request.POST.get("save"):
             for entry in items_in_receipt:
                 new_quantity = int(request.POST.get(f"{entry.id}qty"))
@@ -244,6 +280,37 @@ def showReceipt(request, id):
     return render(request, 'inventory/editreceipt.html', 
         {"receipt": current_receipt, "items_in_receipt": items_in_receipt, "item_set": Item.objects.all(),
          "brand": current_brand, "model": current_model, "specs": current_specs})
+
+def addCustomer(request, action):
+    if request.method == "POST":
+        if request.POST.get("newCustomer"):
+            name = request.POST.get("name")
+            demographic = request.POST.get("demographic")
+            street = request.POST.get("street")
+            barangay = request.POST.get("barangay")
+            city = request.POST.get("city")
+            province = request.POST.get("province")
+            region = request.POST.get("region")
+            
+            new = Customer(name=name, street=street, barangay=barangay, city=city, province=province, region=region, demographic=demographic)
+            new.save()
+            
+            # pop-up showing that customer is saved
+
+            next_url = "/"
+
+            if action == "addcustomer":
+                next_url += f"{action}-action=/addcustomer"
+
+            return HttpResponseRedirect(next_url)
+
+    current_customer = "*Customer Name (FirstName LastName) / Name of Company"
+
+    if 'customer' in request.session:
+        if request.session['customer'] != "null":
+            current_customer = request.session.get('customer')
+
+    return render(request, 'inventory/addcustomer.html', {"customerName": current_customer})
 
 # helper function to make prices have two decimal places
 def makeStrPriceTwoDecimalPlaces(price):

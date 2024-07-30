@@ -15,9 +15,24 @@
 				<input type="radio", name="type", value="Sales Invoice"> Sales Invoice
 			</div>
 		</div>
-		<p><input type="text", name="number", placeholder="Receipt Number"></p>
-		<p><input type="text", name="store", placeholder="From Which Store/Supplier?"></p>
-		<p><input type="date", name="date", placeholder="Date"></p>
+
+		{% if number == "Receipt Number" %}
+			<p><input type="text", name="number", placeholder="{{number}}"></p>
+			<p><input type="text", name="store", placeholder="{{store}}"></p>
+			<p><input type="date", name="date", placeholder="{{date}}"></p>
+			<p><input list="customerList", type="text", name="customerName", placeholder="{{customer}}"></p>
+		{% else %}
+			<p><input type="text", name="number", placeholder="{{number}}", value="{{number}}"></p>
+			<p><input type="text", name="store", placeholder="{{store}}", value="{{store}}"></p>
+			<p><input type="date", name="date", placeholder="{{date}}", value="{{date}}"></p>
+			<p><input list="customerList", type="text", name="customerName", placeholder="{{customer}}", value="{{customer}}"></p>
+		{% endif %}
+		<datalist id = "customerList">
+			{% for customer in customer_set %}
+			<option value="{{customer}}">
+			{% endfor %}
+		</datalist>
+
 		<p><button type="submit", name="newReceipt", value="newReceipt">Add Receipt</button></p>
 	</form>
 {% endblock %}
