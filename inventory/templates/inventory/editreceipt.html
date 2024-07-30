@@ -5,11 +5,12 @@
 	<p>Date: {{receipt.date}}</p>
 	<p>Type: {{receipt.type}}</p>
 	<p>Store From: {{receipt.store}}</p>
-	<p>Price: {{receipt.total_price}}</p>
 	
 	{% if receipt.customer != None %}
 		<p>Customer: {{receipt.customer}}</p>
 	{% endif %}
+	
+	<p>Price: {{receipt.total_price}}</p>
 
 	<form method="POST" action="#" autocomplete="on">
 		{% csrf_token %}
@@ -21,7 +22,12 @@
 				<input name="{{entry.id}}price" placeholder="{{entry.price}}" value="{{entry.price}}" autocomplete="off" required>
 			</li>
 		{% endfor %}
-		
+
+		{% if message != "" %}
+			<label style="color:red">{{message}}</label>
+			<br><br>
+		{% endif %}
+
 		<label>Add Item To List:</label>
 		{% if brand == "Brand" %}
 			<p><input list="brandList" name="brand" id="brand" placeholder="{{brand}}">

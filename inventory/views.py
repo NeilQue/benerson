@@ -23,17 +23,13 @@ def home(request):
     context["total_laptops"] = total_laptops
     
     if request.method == "POST":
-        if request.POST.get("editItem"):
+        if request.POST.get("addItem"):
+            return HttpResponseRedirect('/additem-action=inventory')
+
+        elif request.POST.get("editItem"):
             for item in all_items:
                 if request.POST.get("c" + str(item.id)) == "clicked":
                     return HttpResponseRedirect('/i%i' %item.id)
-            
-        elif request.POST.get("delItem"):
-            for item in all_items:
-                if request.POST.get("c" + str(item.id)) == "clicked":
-                    item.delete()
-                    
-            return HttpResponseRedirect("/inventory")
                     
         elif request.POST.get("searchItem"):
             search = [word for word in request.POST.get("item_searched").split()]
@@ -176,6 +172,7 @@ def showItem(request, id):
 def showReceipt(request, id):
     current_receipt = Receipt.objects.get(id=id)
     items_in_receipt = ItemInReceipt.objects.filter(receipt=current_receipt)
+    message = ""
 
     current_brand = "Brand"
     current_model = "Model"
@@ -208,33 +205,41 @@ def showReceipt(request, id):
                     
                 else:
                     if current_receipt.store == "Qlinx":
-                        item.qlinx_qty -= item_quantity
+                        if item_quantity <= item.qlinx_qty:
+                            item.qlinx_qty -= item_quantity
                         
-                        if current_receipt.type == "Transfer Slip":
-                            item.benerson_qty += item_quantity
+                            if current_receipt.type == "Transfer Slip":
+                                item.benerson_qty += item_quantity
+                        else:
+                            message = f"There are only {item.qlinx_qty} {item}'s in Qlinx.\nEnter a quantity less than or equal to {item.qlinx_qty + entry.quantity} for {item}"
                         
                     if current_receipt.store == "Benerson":
-                        item.benerson_qty -= item_quantity
+                        if item_quantity <= item.benerson_qty:
+                            item.benerson_qty -= item_quantity
                         
-                        if current_receipt.type == "Transfer Slip":
-                            item.qlinx_qty += item_quantity
-                            
-                item.save()
+                            if current_receipt.type == "Transfer Slip":
+                                item.qlinx_qty += item_quantity
+                        else:
+                            message = f"There are only {item.benerson_qty} {item}'s in Benerson.\nEnter a quantity less than or equal to {item.benerson_qty + entry.quantity} for {item}"
+                
+                if message == "":    
+                    item.save()
 
-                receipt_item = ItemInReceipt(item=item, receipt=current_receipt, quantity=item_quantity, price=item_price)
-                receipt_item.save()
+                    receipt_item = ItemInReceipt(item=item, receipt=current_receipt, quantity=item_quantity, price=item_price)
+                    receipt_item.save()
 
-                if current_receipt.type != "Transfer Slip":
-                    current_price = float(current_receipt.total_price) + float(item_quantity) * float(item_price)
+                    if current_receipt.type != "Transfer Slip":
+                        current_price = float(current_receipt.total_price) + float(item_quantity) * float(item_price)
 
-                    current_receipt.total_price = makeStrPriceTwoDecimalPlaces(str(current_price))
-                    current_receipt.save()
+                        current_receipt.total_price = makeStrPriceTwoDecimalPlaces(str(current_price))
+                        current_receipt.save()
 
             except ObjectDoesNotExist:
-                request.session['brand'] = item_brand
-                request.session['model'] = item_model
-                request.session['specs'] = item_specs
-                return HttpResponseRedirect(f"/additem-action=r{current_receipt.id}")
+                if current_receipt.type == "Supplier Invoice":
+                    request.session['brand'] = item_brand
+                    request.session['model'] = item_model
+                    request.session['specs'] = item_specs
+                    return HttpResponseRedirect(f"/additem-action=r{current_receipt.id}")
 
             except MultipleObjectsReturned:
                 pass
@@ -245,41 +250,58 @@ def showReceipt(request, id):
                 new_price = request.POST.get(f"{entry.id}price")
                 item = entry.item
 
+                new_message = ""
+
                 # update item model's quantity
                 if current_receipt.type == "Supplier Invoice":
                     item.benerson_qty = item.benerson_qty - entry.quantity + new_quantity
                     
                 else:
                     if current_receipt.store == "Qlinx":
-                        item.qlinx_qty = item.qlinx_qty + entry.quantity - new_quantity
+                        if item.qlinx_qty + entry.quantity - new_quantity >= 0:
+                            item.qlinx_qty = item.qlinx_qty + entry.quantity - new_quantity
                         
-                        if current_receipt.type == "Transfer Slip":
-                            item.benerson_qty = item.benerson_qty - entry.quantity + new_quantity
+                            if current_receipt.type == "Transfer Slip":
+                                item.benerson_qty = item.benerson_qty - entry.quantity + new_quantity
+                        else:
+                            if message != "":
+                                new_message = "\n"
+
+                            new_message += f"There are only {item.qlinx_qty + entry.quantity} {item}'s in Qlinx.\nEnter a quantity less than or equal to {item.qlinx_qty + entry.quantity} for {item}"
+                            message += new_message
                         
                     if current_receipt.store == "Benerson":
-                        item.benerson_qty = item.benerson_qty + entry.quantity - new_quantity
+                        if item.benerson_qty + entry.quantity - new_quantity >= 0:
+                            item.benerson_qty = item.benerson_qty + entry.quantity - new_quantity
                         
-                        if current_receipt.type == "Transfer Slip":
-                            item.qlinx_qty = item.qlinx_qty - entry.quantity + new_quantity
-                            
-                item.save()
+                            if current_receipt.type == "Transfer Slip":
+                                item.qlinx_qty = item.qlinx_qty - entry.quantity + new_quantity
+                        else:
+                            if message != "":
+                                new_message = "\n"
 
-                # update receipt's total price as needed
-                if current_receipt.type != "Transfer Slip":
-                    current_price = float(current_receipt.total_price) - float(entry.quantity) * float(entry.price)
-                    current_price = str(current_price + float(new_quantity) * float(new_price))
+                            new_message += f"There are only {item.benerson_qty + entry.quantity} {item}'s in Benerson.\nEnter a quantity less than or equal to {item.benerson_qty + entry.quantity} for {item}"
+                            message += new_message
 
-                    current_receipt.total_price = makeStrPriceTwoDecimalPlaces(current_price)
-                    current_receipt.save()
+                if new_message == "":
+                    item.save()
 
-                # update item in receipt quantity as needed
-                entry.quantity = new_quantity
-                entry.price = makeStrPriceTwoDecimalPlaces(new_price)
-                entry.save()
+                    # update receipt's total price as needed
+                    if current_receipt.type != "Transfer Slip":
+                        current_price = float(current_receipt.total_price) - float(entry.quantity) * float(entry.price)
+                        current_price = str(current_price + float(new_quantity) * float(new_price))
+
+                        current_receipt.total_price = makeStrPriceTwoDecimalPlaces(current_price)
+                        current_receipt.save()
+
+                    # update item in receipt quantity as needed
+                    entry.quantity = new_quantity
+                    entry.price = makeStrPriceTwoDecimalPlaces(new_price)
+                    entry.save()
 
     return render(request, 'inventory/editreceipt.html', 
         {"receipt": current_receipt, "items_in_receipt": items_in_receipt, "item_set": Item.objects.all(),
-         "brand": current_brand, "model": current_model, "specs": current_specs})
+         "brand": current_brand, "model": current_model, "specs": current_specs, "message": message})
 
 def addCustomer(request, action):
     if request.method == "POST":
