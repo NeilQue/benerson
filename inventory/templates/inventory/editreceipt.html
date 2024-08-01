@@ -41,10 +41,10 @@
 			<p><input list="receiptList" name="paidReceipt" id="paidReceipt" placeholder="Receipt #XXXX">
 			<datalist id = "receiptList">
 				{% for r in receipt_set %}
-					{% if receipt.type == "Cheque Voucher" and r.type == "Supplier Invoice" and r.total_price > r.amount_paid %}
+					{% if receipt.type == "Cheque Voucher" and r.type == "Supplier Invoice" and r.total_price != r.amount_paid %}
 						<option value="{{r}}">
 					{% elif receipt.type == "Collection Receipt" %}
-						{% if r.type == "Sales Invoice" or r.type == "Charge Invoice" and r.total_price > r.amount_paid %}
+						{% if r.type == "Sales Invoice" or r.type == "Charge Invoice" and r.total_price != r.amount_paid %}
 							<option value="{{r}}">
 						{% endif %}
 					{% endif %}

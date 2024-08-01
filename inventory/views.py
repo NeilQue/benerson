@@ -219,7 +219,7 @@ def showReceipt(request, id):
                     receipt.save()
                     current_receipt.save()
 
-                    paid_receipt = ReceiptInReceipt(paid_receipt=receipt, source_document=current_receipt, amount_paid=amount_paid)
+                    paid_receipt = ReceiptInReceipt(paid_receipt=receipt, source_document=current_receipt, amount_paid=makeStrPriceTwoDecimalPlaces(amount_paid))
                     paid_receipt.save()
 
             except ObjectDoesNotExist:
@@ -278,6 +278,8 @@ def showReceipt(request, id):
                     request.session['model'] = item_model
                     request.session['specs'] = item_specs
                     return HttpResponseRedirect(f"/additem-action=r{current_receipt.id}")
+                
+                message = f"{item_brand} {item_model} {item_specs} is not yet in the database. Encode it through the Add Item page accessible from the Inventory."
 
             except MultipleObjectsReturned:
                 pass
