@@ -203,13 +203,13 @@ def showReceipt(request, id):
 
             try:
                 receipt = Receipt.objects.get(number=receipt_number)
-                remaining_balance = float(receipt.total_price) - float(receipt.amount_paid)
+                remaining_balance = round(float(receipt.total_price) - float(receipt.amount_paid), 2)
 
-                if remaining_balance >= float(amount_paid):
-                    temp = float(receipt.amount_paid) + float(amount_paid)
+                if remaining_balance >= round(float(amount_paid), 2):
+                    temp = round(float(receipt.amount_paid) + float(amount_paid), 2)
                     receipt.amount_paid = makeStrPriceTwoDecimalPlaces(str(temp))
 
-                    temp = float(current_receipt.amount_paid) + float(amount_paid)
+                    temp = round(float(current_receipt.amount_paid) + float(amount_paid), 2)
                     current_receipt.amount_paid = makeStrPriceTwoDecimalPlaces(str(temp))
                 else:
                     remaining_balance = makeStrPriceTwoDecimalPlaces(str(remaining_balance))
@@ -290,13 +290,13 @@ def showReceipt(request, id):
 
                     new_message = ""
 
-                    remaining_balance = float(paid_receipt.total_price) - float(paid_receipt.amount_paid) + float(entry.amount_paid)
+                    remaining_balance = round(float(paid_receipt.total_price) - float(paid_receipt.amount_paid) + float(entry.amount_paid), 2)
 
-                    if remaining_balance >= float(new_amount_paid):
-                        temp = float(paid_receipt.amount_paid) - float(entry.amount_paid) + float(new_amount_paid)
+                    if remaining_balance >= round(float(new_amount_paid), 2):
+                        temp = round(float(paid_receipt.amount_paid) - float(entry.amount_paid) + float(new_amount_paid), 2)
                         paid_receipt.amount_paid = makeStrPriceTwoDecimalPlaces(str(temp))
 
-                        temp = float(current_receipt.amount_paid) - float(entry.amount_paid) + float(new_amount_paid)
+                        temp = round(float(current_receipt.amount_paid) - float(entry.amount_paid) + float(new_amount_paid), 2)
                         current_receipt.amount_paid = makeStrPriceTwoDecimalPlaces(str(temp))
                     else:
                         if message != "":
