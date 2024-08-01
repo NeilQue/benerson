@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import Customer, Receipt, Item, ItemInReceipt
+from .models import Customer, Receipt, Item, ItemInReceipt, ReceiptInReceipt
 from django.http import HttpResponseRedirect
 from django.db.models import Q
 from django.db.models.functions import Lower
@@ -7,7 +7,8 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 
 ## SUGGESTIONS ##
-# add add receipt in sidenav to make it starting point
+# add payables / receivables that are paid through cheque vouchers / collection receipts
+# add charge invoice
 
 # inventory
 def home(request):
@@ -124,10 +125,15 @@ def addReceipt(request):
             store = request.POST.get("store")
             new = Receipt(number=number,date=date,type=type,store=store)
             
-            if type == "Sales Invoice":
+            if type == "Supplier Invoice":
+                new.amount_paid = makeStrPriceTwoDecimalPlaces(request.POST.get("amountPaid"))
+
+            elif type == "Sales Invoice" or type == "Charge Invoice":
                 try:
                     customer = Customer.objects.get(name=request.POST.get("customerName"))
                     new.customer = customer
+
+                    new.amount_paid = makeStrPriceTwoDecimalPlaces(request.POST.get("amountPaid"))
                 except ObjectDoesNotExist:
                     request.session['number'] = number
                     request.session['date'] = date
@@ -171,6 +177,7 @@ def showItem(request, id):
 #edit receipt
 def showReceipt(request, id):
     current_receipt = Receipt.objects.get(id=id)
+    receipts_in_receipt = ReceiptInReceipt.objects.filter(source_document=current_receipt)
     items_in_receipt = ItemInReceipt.objects.filter(receipt=current_receipt)
     message = ""
 
@@ -189,7 +196,38 @@ def showReceipt(request, id):
             request.session['specs'] = "null"
 
     if request.method == "POST":
-        if request.POST.get("addItem"):
+        if request.POST.get("addReceipt"):
+            receipt_name = request.POST.get("paidReceipt") # Receipt #XXXX
+            receipt_number = receipt_name.split(' ')[1][1:] # this separates Receipt from #XXXX, gets the latter, and then gets XXXX
+            amount_paid = request.POST.get("amountPaid")
+
+            try:
+                receipt = Receipt.objects.get(number=receipt_number)
+                remaining_balance = float(receipt.total_price) - float(receipt.amount_paid)
+
+                if remaining_balance >= float(amount_paid):
+                    temp = float(receipt.amount_paid) + float(amount_paid)
+                    receipt.amount_paid = makeStrPriceTwoDecimalPlaces(str(temp))
+
+                    temp = float(current_receipt.amount_paid) + float(amount_paid)
+                    current_receipt.amount_paid = makeStrPriceTwoDecimalPlaces(str(temp))
+                else:
+                    remaining_balance = makeStrPriceTwoDecimalPlaces(str(remaining_balance))
+                    message = f"Remaining Balance in {receipt} is only {remaining_balance}. Enter an amount less than or equal to {remaining_balance} for {receipt}."
+
+                if message == "":
+                    receipt.save()
+                    current_receipt.save()
+
+                    paid_receipt = ReceiptInReceipt(paid_receipt=receipt, source_document=current_receipt, amount_paid=amount_paid)
+                    paid_receipt.save()
+
+            except ObjectDoesNotExist:
+                message = f"{receipt_name} does not exist in the database. Please add this receipt first"
+            except MultipleObjectsReturned:
+                pass
+
+        elif request.POST.get("addItem"):
             item_brand = request.POST.get("brand")
             item_model = request.POST.get("model")
             item_specs = request.POST.get("specs")
@@ -245,62 +283,95 @@ def showReceipt(request, id):
                 pass
 
         elif request.POST.get("save"):
-            for entry in items_in_receipt:
-                new_quantity = int(request.POST.get(f"{entry.id}qty"))
-                new_price = request.POST.get(f"{entry.id}price")
-                item = entry.item
+            if current_receipt.type == "Cheque Voucher" or current_receipt.type == "Collection Receipt":
+                for entry in receipts_in_receipt:
+                    new_amount_paid = request.POST.get(f"{entry.id}paidAmt")
+                    paid_receipt = entry.paid_receipt
 
-                new_message = ""
+                    new_message = ""
 
-                # update item model's quantity
-                if current_receipt.type == "Supplier Invoice":
-                    item.benerson_qty = item.benerson_qty - entry.quantity + new_quantity
-                    
-                else:
-                    if current_receipt.store == "Qlinx":
-                        if item.qlinx_qty + entry.quantity - new_quantity >= 0:
-                            item.qlinx_qty = item.qlinx_qty + entry.quantity - new_quantity
-                        
-                            if current_receipt.type == "Transfer Slip":
-                                item.benerson_qty = item.benerson_qty - entry.quantity + new_quantity
-                        else:
-                            if message != "":
-                                new_message = "\n"
+                    remaining_balance = float(paid_receipt.total_price) - float(paid_receipt.amount_paid) + float(entry.amount_paid)
 
-                            new_message += f"There are only {item.qlinx_qty + entry.quantity} {item}'s in Qlinx. Enter a quantity less than or equal to {item.qlinx_qty + entry.quantity} for {item}."
-                            message += new_message
-                        
-                    if current_receipt.store == "Benerson":
-                        if item.benerson_qty + entry.quantity - new_quantity >= 0:
-                            item.benerson_qty = item.benerson_qty + entry.quantity - new_quantity
-                        
-                            if current_receipt.type == "Transfer Slip":
-                                item.qlinx_qty = item.qlinx_qty - entry.quantity + new_quantity
-                        else:
-                            if message != "":
-                                new_message = "\n"
+                    if remaining_balance >= float(new_amount_paid):
+                        temp = float(paid_receipt.amount_paid) - float(entry.amount_paid) + float(new_amount_paid)
+                        paid_receipt.amount_paid = makeStrPriceTwoDecimalPlaces(str(temp))
 
-                            new_message += f"There are only {item.benerson_qty + entry.quantity} {item}'s in Benerson. Enter a quantity less than or equal to {item.benerson_qty + entry.quantity} for {item}."
-                            message += new_message
+                        temp = float(current_receipt.amount_paid) - float(entry.amount_paid) + float(new_amount_paid)
+                        current_receipt.amount_paid = makeStrPriceTwoDecimalPlaces(str(temp))
+                    else:
+                        if message != "":
+                            new_message = "\n"
 
-                if new_message == "":
-                    item.save()
+                        remaining_balance = makeStrPriceTwoDecimalPlaces(str(remaining_balance))
 
-                    # update receipt's total price as needed
-                    if current_receipt.type != "Transfer Slip":
-                        current_price = float(current_receipt.total_price) - float(entry.quantity) * float(entry.price)
-                        current_price = str(current_price + float(new_quantity) * float(new_price))
+                        new_message += f"Remaining Balance in {paid_receipt} is only {remaining_balance}. Enter an amount less than or equal to {remaining_balance} for {paid_receipt}."
+                        message += new_message
 
-                        current_receipt.total_price = makeStrPriceTwoDecimalPlaces(current_price)
+                    if new_message == "":
+                        paid_receipt.save()
                         current_receipt.save()
 
-                    # update item in receipt quantity as needed
-                    entry.quantity = new_quantity
-                    entry.price = makeStrPriceTwoDecimalPlaces(new_price)
-                    entry.save()
+                        entry.amount_paid = makeStrPriceTwoDecimalPlaces(new_amount_paid)
+                        entry.save()
+
+            else:
+                for entry in items_in_receipt:
+                    new_quantity = int(request.POST.get(f"{entry.id}qty"))
+                    new_price = request.POST.get(f"{entry.id}price")
+                    item = entry.item
+
+                    new_message = ""
+
+                    # update item model's quantity
+                    if current_receipt.type == "Supplier Invoice":
+                        item.benerson_qty = item.benerson_qty - entry.quantity + new_quantity
+                        
+                    else:
+                        if current_receipt.store == "Qlinx":
+                            if item.qlinx_qty + entry.quantity - new_quantity >= 0:
+                                item.qlinx_qty = item.qlinx_qty + entry.quantity - new_quantity
+                            
+                                if current_receipt.type == "Transfer Slip":
+                                    item.benerson_qty = item.benerson_qty - entry.quantity + new_quantity
+                            else:
+                                if message != "":
+                                    new_message = "\n"
+
+                                new_message += f"There are only {item.qlinx_qty + entry.quantity} {item}'s in Qlinx. Enter a quantity less than or equal to {item.qlinx_qty + entry.quantity} for {item}."
+                                message += new_message
+                            
+                        if current_receipt.store == "Benerson":
+                            if item.benerson_qty + entry.quantity - new_quantity >= 0:
+                                item.benerson_qty = item.benerson_qty + entry.quantity - new_quantity
+                            
+                                if current_receipt.type == "Transfer Slip":
+                                    item.qlinx_qty = item.qlinx_qty - entry.quantity + new_quantity
+                            else:
+                                if message != "":
+                                    new_message = "\n"
+
+                                new_message += f"There are only {item.benerson_qty + entry.quantity} {item}'s in Benerson. Enter a quantity less than or equal to {item.benerson_qty + entry.quantity} for {item}."
+                                message += new_message
+
+                    if new_message == "":
+                        item.save()
+
+                        # update receipt's total price as needed
+                        if current_receipt.type != "Transfer Slip":
+                            current_price = float(current_receipt.total_price) - float(entry.quantity) * float(entry.price)
+                            current_price = str(current_price + float(new_quantity) * float(new_price))
+
+                            current_receipt.total_price = makeStrPriceTwoDecimalPlaces(current_price)
+                            current_receipt.save()
+
+                        # update item in receipt quantity as needed
+                        entry.quantity = new_quantity
+                        entry.price = makeStrPriceTwoDecimalPlaces(new_price)
+                        entry.save()
 
     return render(request, 'inventory/editreceipt.html', 
-        {"receipt": current_receipt, "items_in_receipt": items_in_receipt, "item_set": Item.objects.all(),
+        {"receipt": current_receipt, "receipts_in_receipt": receipts_in_receipt, "receipt_set": Receipt.objects.all(),
+         "items_in_receipt": items_in_receipt, "item_set": Item.objects.all(),
          "brand": current_brand, "model": current_model, "specs": current_specs, "message": message})
 
 def customersList(request):

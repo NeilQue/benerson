@@ -4,70 +4,114 @@
 	<h2 style="padding-bottom:10px">Receipt #{{receipt.number}}</h2>
 	<p>Date: {{receipt.date}}</p>
 	<p>Type: {{receipt.type}}</p>
-	<p>Store From: {{receipt.store}}</p>
+
+	{% if receipt.store != None %}
+		<p>Store From: {{receipt.store}}</p>
+	{% endif %}
 	
 	{% if receipt.customer != None %}
 		<p>Customer: {{receipt.customer}}</p>
 	{% endif %}
 	
-	<p>Price: {{receipt.total_price}}</p>
+	{% if receipt.type != "Transfer Slip" %}
+		{% if receipt.type == "Supplier Invoice" or receipt.type == "Sales Invoice" or receipt.type == "Charge Invoice" %}
+			<p>Price: {{receipt.total_price}}</p>
+		{% endif %}
+		
+		<p>Amount Paid: {{receipt.amount_paid}}</p>
+	{% endif %}
 
 	<form method="POST" action="#" autocomplete="on">
 		{% csrf_token %}
-		<p>ITEMS</p>
-		{% for entry in items_in_receipt %}
-			<li>
-				{{entry.item}}
-				<input type="number" name="{{entry.id}}qty" placeholder="{{entry.quantity}}" value="{{entry.quantity}}" autocomplete="off" required>
-				<input name="{{entry.id}}price" placeholder="{{entry.price}}" value="{{entry.price}}" autocomplete="off" required>
-			</li>
-		{% endfor %}
-
-		{% if message != "" %}
-			<label style="color:red">{{message|linebreaks}}</label>
-			<br>
-		{% endif %}
-
-		<label>Add Item To List:</label>
-		{% if brand == "Brand" %}
-			<p><input list="brandList" name="brand" id="brand" placeholder="{{brand}}">
-		{% else %}
-			<p><input list="brandList" name="brand" id="brand" placeholder="{{brand}}" value="{{brand}}">
-		{% endif %}
-		<datalist id = "brandList">
-			{% for item in item_set %}
-			<option value="{{item.brand}}">
+		{% if receipt.type == "Collection Receipt" or receipt.type == "Cheque Voucher" %}
+			<p>PAID RECEIPTS</p>
+			{% for entry in receipts_in_receipt %}
+				<li>
+					{{entry.paid_receipt}}
+					<input name="{{entry.id}}paidAmt" placeholder="{{entry.amount_paid}}" value="{{entry.amount_paid}}" autocomplete="off" required>
+				</li>
 			{% endfor %}
-		</datalist>
 
-		{% if model == "Model" %}
-			<input list="modelList" name="model" id="model" placeholder="{{model}}">
+			{% if message != "" %}
+				<label style="color:red">{{message|linebreaks}}</label>
+				<br>
+			{% endif %}
+
+			<label>Add Receipt To List:</label>
+			<p><input list="receiptList" name="paidReceipt" id="paidReceipt" placeholder="Receipt #XXXX">
+			<datalist id = "receiptList">
+				{% for r in receipt_set %}
+					{% if receipt.type == "Cheque Voucher" and r.type == "Supplier Invoice" and r.total_price > r.amount_paid %}
+						<option value="{{r}}">
+					{% elif receipt.type == "Collection Receipt" %}
+						{% if r.type == "Sales Invoice" or r.type == "Charge Invoice" and r.total_price > r.amount_paid %}
+							<option value="{{r}}">
+						{% endif %}
+					{% endif %}
+				{% endfor %}
+			</datalist>
+
+			<p><label>Amount Paid: </label>
+			<input name="amountPaid" placeholder="Amount Paid" autocomplete="off"></p>
+
+			<p><button type="submit" name="addReceipt" value="addReceipt">Add Receipt</button></p>
 		{% else %}
-			<input list="modelList" name="model" id="model" placeholder="{{model}}" value="{{model}}">
-		{% endif %}
-		<datalist id = "modelList">
-			{% for item in item_set %}
-			<option value="{{item.model}}">
+			<p>ITEMS</p>
+			{% for entry in items_in_receipt %}
+				<li>
+					{{entry.item}}
+					<input type="number" name="{{entry.id}}qty" placeholder="{{entry.quantity}}" value="{{entry.quantity}}" autocomplete="off" required>
+					<input name="{{entry.id}}price" placeholder="{{entry.price}}" value="{{entry.price}}" autocomplete="off" required>
+				</li>
 			{% endfor %}
-		</datalist>
 
-		{% if specs == "Specs" %}
-			<input list="specsList" name="specs" id="specs" placeholder="{{specs}}">
-		{% else %}
-			<input list="specsList" name="specs" id="specs" placeholder="{{specs}}" value="{{specs}}">
+			{% if message != "" %}
+				<label style="color:red">{{message|linebreaks}}</label>
+				<br>
+			{% endif %}
+
+			<label>Add Item To List:</label>
+			{% if brand == "Brand" %}
+				<p><input list="brandList" name="brand" id="brand" placeholder="{{brand}}">
+			{% else %}
+				<p><input list="brandList" name="brand" id="brand" placeholder="{{brand}}" value="{{brand}}">
+			{% endif %}
+			<datalist id = "brandList">
+				{% for item in item_set %}
+				<option value="{{item.brand}}">
+				{% endfor %}
+			</datalist>
+
+			{% if model == "Model" %}
+				<input list="modelList" name="model" id="model" placeholder="{{model}}">
+			{% else %}
+				<input list="modelList" name="model" id="model" placeholder="{{model}}" value="{{model}}">
+			{% endif %}
+			<datalist id = "modelList">
+				{% for item in item_set %}
+				<option value="{{item.model}}">
+				{% endfor %}
+			</datalist>
+
+			{% if specs == "Specs" %}
+				<input list="specsList" name="specs" id="specs" placeholder="{{specs}}">
+			{% else %}
+				<input list="specsList" name="specs" id="specs" placeholder="{{specs}}" value="{{specs}}">
+			{% endif %}
+			<datalist id = "specsList">
+				{% for item in item_set %}
+				<option value="{{item.specs}}">
+				{% endfor %}
+			</datalist></p>
+
+			<p><label>Quantity: </label>
+			<input type="number" name="quantity" placeholder="Quantity" autocomplete="off"></p>
+			<p><label>Price: </label>
+			<input name="price" placeholder="Price" autocomplete="off"></p>
+
+			<p><button type="submit" name="addItem" value="addItem">Add Item</button></p>
 		{% endif %}
-		<datalist id = "specsList">
-			{% for item in item_set %}
-			<option value="{{item.specs}}">
-			{% endfor %}
-		</datalist></p>
 
-		<p><label>Quantity: </label>
-		<input type="number" name="quantity" placeholder="Quantity" autocomplete="off"></p>
-		<p><label>Price: </label>
-		<input name="price" placeholder="Price" autocomplete="off"></p>
-
-		<p><button type="submit" name="addItem" value="addItem">Add Item</button></p>
 		<p><button type="submit" name="save" value="save">Save</button></p>
 	</form>
 {% endblock %}
